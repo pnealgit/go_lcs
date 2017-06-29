@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta charset="utf-8">
+<style>
+canvas {
+    border:2px solid #000000;
+    background-color: #ffffff;
+    padding: 0;
+    margin: auto;
+    display: block;
+}
+table, th, td {
+    border: 1px solid black;
+    font-size: 12px;
+    font-family: Arial , sans-serif;
+}
+
+</style>
+
+<script src='auxiliary.js'></script>
+<script src='game.js'></script>
+<script src='food.js'></script>
+<script src='gostuff.js'></script>
+
+<script>  
+
+var episode_knt = 0;
+var num_episodes = 0;
+var num_rovers = 1;
+var num_inputs = 19;
+var num_hidden = 38;
+console.log("num_roverss",num_rovers)
+console.log("num_inputs",num_inputs)
+console.log("num_hidden",num_hidden)
+var num_outputs = 8;
+var pause = false;
+rovers = [];
+green_food = [];
+var num_foods = 30;
+width = 480
+height = 300
+make_action_positions();
+
+
+function getRandomInt(min,max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+function getRandomFloat(min,max) {
+    return 0.0 + (Math.random() * (max - min )) + min;
+}
+    
+       
+function startGame() {
+    WebsocketStart();
+    green_food = new Food(num_foods); 
+    myGameArea.start();
+}
+ 
+</script>
+</head>
+<body onload="startGame()">
+<p>
+<center>
+<button onclick="javascript:myGameArea.stop()">stop</button>
+<button onclick="javascript:myGameArea.start()">start</button>
+</center>
+
+</body>
+</html>
+
