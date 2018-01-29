@@ -1,63 +1,59 @@
-function Food(num_foods) {
-console.log("new Food ",num_foods);
-
-    this.color = 'green';
-    this.num_foods = num_foods;
-    this.r = 15;
-    this.morsels = [];
-    this.make_morsels();
+function reset_food_positions() {
+   for(var fnn=0; fnn <num_foods;fnn++) {
+         foods[fnn].reset_position();
+   } //end of loop
 }
 
-Food.prototype.make_morsels = function() {
-    var start = (2*this.r)+10; //adjust for radius of food
-      
-    console.log("width,height",width,height); 
-    var px = 0;
-    var py = 0;
+
+function update_foods() {
+   for(var ik=0; ik <num_foods;ik++) {
+       foods[ik].update();
+   }
+}
  
-    for(var im= 0;im<this.num_foods;im++) {
-        px = getRandomInt(start,width-start);
-        py = getRandomInt(start,height-start);
+function Food(x,y) {
 
-        var junk = new Morsel(im,px,py);
-        this.morsels.push(junk);
+    this.x = x;
+    this.y = y;
+    this.r = 15;
+    this.color = 'green';
+
+    this.update = function() {
+        ctx = myGameArea.context;
+        ctx.beginPath();
+        ctx.arc(this.x,this.y,this.r,0,2*Math.PI);
+        ctx.fillStyle = this.color;
+        ctx.fill();
+        ctx.strokeStyle = '#ff0000';
+        ctx.stroke();
+        ctx.closePath();
+     } //end of food update
+
+    this.reset_position = function() {
+      //this.r = 15;
+    } //end of reset
+
+} //end of food function  
+
+function make_foods(num_foods) {
+ 
+    x = 0;
+    y = 0;
+    centerx = width/2
+    centery = height/2
+    circ_radius = 100
+ 
+    w = width-100;
+    h = height-100;
+    r = 15; //radius of food
+
+    delta_radians = (2.0*Math.PI)*(1.0/num_foods)
+    fangle = 0;
+    for (var fknt =0;fknt<num_foods;fknt++) {
+        py = centery + circ_radius*Math.sin(fangle)+Math.random()*2.0
+        px = centerx + circ_radius*Math.cos(fangle)+Math.random()*2.0
+        foods[fknt] = new Food(px,py);
+        fangle += delta_radians
     }
-} //end of make_morsels
-
-
-Food.prototype.update_morsels = function() {
-    for(var im=0;im<this.morsels.length;im++) {
-        this.morsels[im].update();
-    }
-} //end of 
-Food.prototype.draw_morsels = function() {
-
-    for(var im=0;im<this.morsels.length;im++) {
-        this.morsels[im].draw();
-    }
-} //end of draw_morsels
-
-function Morsel(id,xpos,ypos) {
-    this.id = id;
-    this.xpos  = xpos;
-    this.ypos  = ypos;
-    this.r  = getRandomFloat(5,16);
-}
-
-Morsel.prototype.draw = function() {
-    if (this.r <=0.0) {
-        return;
-    }
-
-    ctx = myGameArea.context;
-    ctx.beginPath();
-    ctx.arc(this.xpos,this.ypos,this.r,0,2*Math.PI);
-    ctx.fillStyle = "green";
-    ctx.fill();
-    ctx.strokeStyle = '#ff0000';
-    ctx.stroke();
-    ctx.closePath();
-}
-Morsel.prototype.update = function() {
-}
+}//end of function make_foods
 

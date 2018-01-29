@@ -1,5 +1,13 @@
 var ws
 var pause = false
+
+function get_new_radians(angle_rec) {
+    var angle = 0.0;
+    var delta = 2.0 * Math.PI /8.0;
+    angle = angle_rec.Angle * delta;
+    return angle;
+}
+
 function WebsocketStart() {
 
     ws = new WebSocket("ws://localhost:8081/talk")
@@ -16,14 +24,15 @@ function WebsocketStart() {
     }
 
     ws.onmessage = function(e) {
-         var n = e.data.indexOf("OK");
-         if (n > 0 ) {
-             return;
-         }
-
+      n = e.data.indexOf("Angles");
+      if (n != -1 ) {
          var response = JSON.parse(e.data)
-         angle_rec = response;
-         rovers[angle_rec.Id].angle = angle_rec.Angle;
+         angles = response.Angle_records
+         for (var iang=0;iang < angles.length;iang++) {
+            angle_rec = angles[iang] 
+            rovers[angle_rec.Id].angle = get_new_radians(angle_rec);
+          } //end of loop on iang
+      } //end of found 'angle'
     } //endo of onmessage
 
 
@@ -41,19 +50,18 @@ senddata = function(data) {
         console.log('cannot send data -- no ws');
         return false;
     }
-
     stuff = JSON.stringify(data);
     ws.send(stuff);
 } //end of function senddata
 
 function setup() {
-    green_food = new Food(num_foods);
-    green_food.draw_morsels();
-    team = new Team(num_rovers,num_inputs,num_hidden,num_outputs);
+    make_foods(num_foods);
+    reset_food_positions();
+    team = new Team(num_rovers,num_inputs);
     console.log("TEAM: ",team)
     //senddata(team);
     rovers = make_rovers(team);
-//console.log("rovers: ",rovers)
+console.log("rovers: ",rovers)
 
     console.log('after making rovers');
     episode_knt = 0;
@@ -65,20 +73,20 @@ function updateGameArea() {
     if (pause) {
        return
     }
-    if (episode_knt >= 280) {
-       mydata = {};
-       //reset_rover_positions(rovers);
-       //mydata['num_episodes'] =  num_episodes;
-       //senddata(mydata);
+    if (episode_knt >= 580) {
+       var mydata = {};
+       reset_rover_positions(rovers);
+       mydata['num_episodes'] =  num_episodes;
+       senddata(mydata);
        episode_knt = 0;
-       //reset_food_positions();
+       reset_food_positions();
        num_episodes++;
 
 } //end of if on episode_knt
 
     myGameArea.clear();
     update_rovers(team,rovers);
-    green_food.draw_morsels();
+    update_foods();
     episode_knt+= 1;
 } //end of updateGameArea
 
