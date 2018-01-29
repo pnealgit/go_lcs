@@ -5,6 +5,8 @@ import (
 	"fmt"
         "bytes"
         "os"
+        "math/rand"
+        "math"
 )
 
 type State_record struct {
@@ -23,13 +25,13 @@ var angle_record Angle_record
 type Classifier struct {
     Condition    string
     Action       int
-    Prediction   float64
-    Prediction_error float64
-    Fitness      float64
-    Experience   float64
+    p            float64      //predicted payoff
+    Epsilon float64
+    F            float64      //fitness
+    Exp   float64 
     Last_ga_time_stamp   int
-    Average_action_set_size int
-    Numerosity   int
+    as float64                   //average selection set size
+    n   float64                  //numerosity
 }
 
 type Population struct {
@@ -46,8 +48,8 @@ type Action_set struct {
 
 var p Population
 var m Match_set
-var a Action_set
-var a_minus Action_set
+var action_set Action_set
+var action_set_minus Action_set
 
 func do_lcs( message []byte) []byte {
        
@@ -68,14 +70,21 @@ func do_lcs( message []byte) []byte {
             os.Exit(2)
         }
     
-        generate_match_set(state_string,state_record.Reward)
-        generate_prediction_array()
+        generate_match_set(state_string)
+        dump_match_set(state_string)
+
+        action := 0
+        action = generate_prediction_array()
+        fmt.Printf("Selected Action %d \n",action)
+
+        generate_action_set(action)
+
+        update_action_set(state_record.Reward)
 
         if len(p.Classifiers) >= parameters.N {
              dump_population()
              os.Exit(3)
         }
-        get_action_set()
         
 
         angle_record.Angle = 1.0
@@ -110,14 +119,158 @@ func convert_input(state_record State_record) string {
 
 func dump_population() {
      i := 0
+     kntr := make(map[string]int)
+
      for i=0;i<len(p.Classifiers);i++ {
-       fmt.Printf("%4d %4d %v\n",i,p.Classifiers[i].Action,p.Classifiers[i].Condition)
+       kntr[p.Classifiers[i].Condition]++
      }
+     for k,v := range kntr {
+        fmt.Printf("%d %s\n",v,k)
+     }
+
 } //end of dump
 
-func generate_prediction_array() {
+func dump_match_set(state_string string) {
+     fmt.Println("DUMP MATCH SET \n")
+     fmt.Printf( "%s\n",state_string)
+     i := 0
+     kntr := make(map[string]int)
+     kntr2 := make(map[int]int)
+
+     for i=0;i<len(m.Classifiers);i++ {
+       kntr[m.Classifiers[i].Condition]++
+     }
+     for k,v := range kntr {
+        fmt.Printf("Match set %d %s\n",v,k)
+     }
+
+     for i=0;i<len(m.Classifiers);i++ {
+       kntr2[m.Classifiers[i].Action]++
+     }
+     fmt.Printf("Action Counts\n")
+
+     for k,v := range kntr2 {
+        fmt.Printf("ACTIONS %d %d\n",v,k)
+     }
+
+} //end of dump_match_set
+
+
+func generate_prediction_array() int {
     fmt.Println("generating prediction_array")
+    pa := make(map[int]float64) 
+    fsa := make(map[int]float64) 
+    i := 0
+    for i=0;i<len(m.Classifiers);i++ {
+        pa[m.Classifiers[i].Action] += m.Classifiers[i].p * m.Classifiers[i].F
+        fsa[m.Classifiers[i].Action] += m.Classifiers[i].F
+    } 
+    for k,_ := range possible_actions {
+        if fsa[k] > 0.0 {
+            pa[k] = pa[k]/fsa[k]
+        }
+    }
+    fmt.Printf("PA %+v\n",pa)
+
+    action := 0               //do nothing for the moment
+    action = select_action(pa)
+    return action
 }
-func get_action_set() {
+func select_action(pa map[int]float64) int {
+    action := 0
+    if rand.Float64() < parameters.Prob_explor {
+        //explore
+        fmt.Println("explore")
+        action = rand.Intn(len(possible_actions))
+    } else {
+        //exploit
+        fmt.Println("exploit")
+        //get max
+        max := -999.9
+        for k,v := range pa {
+            fmt.Printf("k %3d v %f \n",k,v)
+            if v > max {
+                action = k
+                max = v
+            }
+        } //end of get max
+    } //end of exploit
+    return action
+} //end of select_action
+
+
+func generate_action_set(action int) {
+   action_set.Classifiers = nil
+   i := 0
+   for i=0;i<len(m.Classifiers);i++ {
+      if m.Classifiers[i].Action == action {
+         action_set.Classifiers = append(action_set.Classifiers,m.Classifiers[i])
+      }
+   }
+} //end of generate action set
+
+func update_action_set(reward float64) {
+    //reward is 'P' 
+    fmt.Printf("UPDATE ACTION SET REWARD IS : %f \n",reward)
+    i := 0
+    for i=0;i<len(action_set.Classifiers);i++ {
+        action_set.Classifiers[i].Exp++
+
+        //prediction
+        delta := reward - action_set.Classifiers[i].p 
+        if action_set.Classifiers[i].Exp < 1.0/parameters.Beta {
+            action_set.Classifiers[i].p += delta/action_set.Classifiers[i].Exp
+        } else {
+            action_set.Classifiers[i].p += parameters.Beta * delta
+        }
+
+        //prediction_error
+        ad := math.Abs(delta)
+        if action_set.Classifiers[i].Exp < 1.0/parameters.Beta {
+            action_set.Classifiers[i].Epsilon += 
+                 (ad - action_set.Classifiers[i].Epsilon)/action_set.Classifiers[i].Exp
+       } else {
+            action_set.Classifiers[i].Epsilon += parameters.Beta * (ad - action_set.Classifiers[i].Epsilon)
+       }
+
+       //action set size estimate
+       //'c.n' is numerosity
+       j := 0
+       sum := 0.0
+       for j=0;j<len(action_set.Classifiers);j++ {
+            sum += action_set.Classifiers[j].as - action_set.Classifiers[i].n
+       } 
+
+        if action_set.Classifiers[i].Exp < 1.0/parameters.Beta {
+            action_set.Classifiers[i].as += sum /action_set.Classifiers[i].Exp
+        } else {
+            action_set.Classifiers[i].as += parameters.Beta * sum
+        }
+    } //end of loop on classifiers in action set
+
+    update_fitness()
 }
 
+func update_fitness() {
+    accuracy_sum := 0.0
+    var k []float64
+
+    k = make([]float64,len(action_set.Classifiers))
+
+    i := 0
+    for i=0;i<len(action_set.Classifiers);i++ {
+        if action_set.Classifiers[i].Epsilon < parameters.Epsilon_zero {
+            k[i] = 1.0
+        } else {
+            tspread := (action_set.Classifiers[i].Epsilon/parameters.Epsilon_zero)
+            spread := math.Pow(tspread,parameters.V)
+            k[i] = parameters.Alpha * spread
+        } 
+        accuracy_sum += k[i] * action_set.Classifiers[i].n
+    }
+    for i=0;i<len(action_set.Classifiers);i++ {
+        quant := (k[i] * action_set.Classifiers[i].n/accuracy_sum) - action_set.Classifiers[i].F
+        action_set.Classifiers[i].F = action_set.Classifiers[i].F + parameters.Beta * quant
+    }
+} //end of update fitness
+     
