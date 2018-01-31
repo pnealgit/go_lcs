@@ -29,7 +29,7 @@ type Classifier struct {
     Epsilon float64
     F            float64      //fitness
     Exp   float64 
-    Last_ga_time_stamp   int
+    ts    float64
     as float64                   //average selection set size
     n   float64                  //numerosity
 }
@@ -51,6 +51,9 @@ var m Match_set
 var action_set Action_set
 var action_set_minus Action_set
 
+var my_time float64
+var state_string string
+
 func do_lcs( message []byte) []byte {
        
 	var err error
@@ -61,7 +64,7 @@ func do_lcs( message []byte) []byte {
 		fmt.Println("error on state unmarshal")
 		panic(fmt.Sprintf("%s", "ARRRGGGH"))
 	} //end of if on jerr
-        state_string := ""
+        state_string = ""
         state_string = convert_input(state_record)
         if len(state_string) != 36 {
             fmt.Printf("length is : %4d\n",len(state_string))
@@ -69,7 +72,8 @@ func do_lcs( message []byte) []byte {
             fmt.Printf("%s\n",state_string)
             os.Exit(2)
         }
-    
+   
+        my_time++ 
         generate_match_set(state_string)
         dump_match_set(state_string)
 
@@ -80,6 +84,8 @@ func do_lcs( message []byte) []byte {
         generate_action_set(action)
 
         update_action_set(state_record.Reward)
+
+        run_ga()
 
         if len(p.Classifiers) >= parameters.N {
              dump_population()
@@ -246,7 +252,7 @@ func update_action_set(reward float64) {
         } else {
             action_set.Classifiers[i].as += parameters.Beta * sum
         }
-    } //end of loop on classifiers in action set
+    } //end of loop on lassifiers in action set
 
     update_fitness()
 }
@@ -273,4 +279,4 @@ func update_fitness() {
         action_set.Classifiers[i].F = action_set.Classifiers[i].F + parameters.Beta * quant
     }
 } //end of update fitness
-     
+   

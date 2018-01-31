@@ -9,7 +9,7 @@ type Parameters struct {
     Epsilon_zero float64
     V  float64
     Exp float64
-    Theta_ga int
+    Theta_ga float64
     Chi   float64
     Mu    float64
     Theta_del int
@@ -36,7 +36,7 @@ func get_parameters() {
         parameters.Prediction_initial = 10.0 //make this relative to reward
         parameters.Gamma = 0.71
         parameters.V = 5
-        parameters.Theta_ga = 25 //adjust
+        parameters.Theta_ga = 25.0 //adjust
         parameters.Chi = 0.5
         parameters.Mu = 0.025
         parameters.Theta_del = 20
