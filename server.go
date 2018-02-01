@@ -40,7 +40,9 @@ func talk(w http.ResponseWriter, r *http.Request) {
 
 		if strings.Contains(junk, "state") {
 			message = do_lcs( message)
+                        fmt.Println("back - message is ",message)
 			err = c.WriteMessage(mt, message)
+                       
 			if err != nil {
 				log.Println("write:", err)
 				break
@@ -73,6 +75,6 @@ func main() {
 		http.ServeFile(w, r, r.URL.Path[1:])
 	})
 
-	fmt.Println("listening on 8081")
+	fmt.Println("\nlistening on 8081")
 	log.Fatal(http.ListenAndServe(*addr, nil))
 } //end of main

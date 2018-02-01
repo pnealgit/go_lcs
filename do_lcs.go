@@ -15,7 +15,8 @@ type State_record struct {
 }
 
 type Angle_record struct {
-    Angle float64
+    Status  string
+    Angle int
 }
 
 var state_record State_record
@@ -54,7 +55,8 @@ var action_set_minus Action_set
 var my_time float64
 var state_string string
 
-func do_lcs( message []byte) []byte {
+//func do_lcs( message []byte) []byte {
+func do_lcs( message []byte) int {
        
 	var err error
         var state_record State_record
@@ -86,6 +88,8 @@ func do_lcs( message []byte) []byte {
         update_action_set(state_record.Reward)
 
         run_ga()
+        lp := len(p.Classifiers)
+        fmt.Println("just before exiting len p ",lp)
 
         if len(p.Classifiers) >= parameters.N {
              dump_population()
@@ -93,11 +97,14 @@ func do_lcs( message []byte) []byte {
         }
         
 
-        angle_record.Angle = 1.0
+        angle_record.Angle = 1
+        angle_record.Status := "angle"
 	message,err  = json.Marshal(angle_record)
         if err != nil {
                 fmt.Println("bad angles Marshal")
         }
+        fmt.Println("returning message ",message)
+
 	return message
 } //end of do_update
 
@@ -156,7 +163,7 @@ func dump_match_set(state_string string) {
      fmt.Printf("Action Counts\n")
 
      for k,v := range kntr2 {
-        fmt.Printf("ACTIONS %d %d\n",v,k)
+        fmt.Printf("ACTIONS %d %d\n",k,v)
      }
 
 } //end of dump_match_set

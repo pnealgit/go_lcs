@@ -38,7 +38,8 @@ func get_parameters() {
         parameters.V = 5
         parameters.Theta_ga = 25.0 //adjust
         parameters.Chi = 0.5
-        parameters.Mu = 0.025
+        //parameters.Mu = 0.025
+        parameters.Mu = 0.25
         parameters.Theta_del = 20
         parameters.Sigma = 0.1
         parameters.Theta_sub = 20

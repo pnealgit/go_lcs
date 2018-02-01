@@ -63,11 +63,12 @@ func make_classifier(state_string string,action int ) Classifier {
     c.Action = action
     c.p = parameters.Prediction_initial
     c.Epsilon = parameters.Epsilon_initial
-    c.F = parameters.Fitness_initial
+    //c.F = parameters.Fitness_initial
+    c.F = .00001
     c.Exp = 0.0
     c.ts = my_time
     c.as = 0.0 //average action set size
-    c.n = 0.0                //numerosity
+    c.n = 1.0                //numerosity
     return c
 }
 

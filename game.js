@@ -24,7 +24,9 @@ function WebsocketStart() {
     }
 
     ws.onmessage = function(e) {
-      n = e.data.indexOf("Angles");
+console.log("message: ",e.data);
+
+      n = e.data.indexOf("angles);
       if (n != -1 ) {
          var response = JSON.parse(e.data)
          angles = response.Angle_records
