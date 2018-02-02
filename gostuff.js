@@ -1,22 +1,12 @@
-var Team = function(num_rovers,num_inputs) {
-    this.team_name = "make_team";
-    this.num_rovers = num_rovers;
-    this.num_inputs = num_inputs;
+function make_rover() {
+    rover = {}
+    rover = new Rover();
+    reset_rover_positions()
+    return rover;
 }
-//end of function
+//end of function make_rover
 
-function make_rovers(team) {
-    rovers = [];
-    for (var ri = 0; ri < team.num_rovers; ri++) {
-        rovers[ri] = new Rover(ri);
-    }
-    reset_rover_positions(rovers)
-    return rovers;
-}
-//end of function make_rovers
-
-function Rover(id) {
-    this.id = id;
+function Rover() {
     this.x = getRandomInt(50,width-50);
     this.y = getRandomInt(50,height-50);
     this.r = 10;
@@ -75,36 +65,22 @@ function Rover(id) {
 }
 //end of Rover function
 
-function update_rovers(team, rovers) {
+function update_rover() {
 
-    all_rovers = {};
-    all_rovers['status'] = "state";
-
-    best_score = -9999.9
-    worst_score = 99999.9
-
-    for (var i = 0; i < team.num_rovers; i++) {
-        this.state = [];
-        my_data = {};
-        my_data['id'] = i;
-        my_data['reward'] = 0;
-
-        rovers[i].get_sensor_data(i);
-        rrr = rovers[i].get_reward();
-       
-        my_data['state'] = rovers[i].state;
-        my_data['reward'] = rrr
-
-        rovers[i].move();
-        rovers[i].draw();
-    }
-    //end of loop on rovers
-
-    //all_rovers['all_recs'] = all_recs;
-    //senddata(all_rovers);
-    senddata(my_data);
+    my_data = {};
+    rover.get_sensor_data();
+    rover.get_reward();
+if (rover.reward > 1 ) {
+    console.log("ROVER REWARD: ",rover.reward);
 }
-//end of function 
+    my_data['status'] = "State";
+ 
+    my_data['state'] = rover.state;
+    my_data['reward'] = rover.reward
+    rover.move();
+    rover.draw();
+    senddata(my_data);
+} //end of function 
 
 Rover.prototype.get_reward = function() {
     //1-4 wall
@@ -113,18 +89,9 @@ Rover.prototype.get_reward = function() {
 
     this.state = [];
 
-    //this.state.push(this.x/width)
-    //this.state.push(this.y/height)
     this.state.push(Math.round(this.x));
     this.state.push(Math.round(this.y));
-    //var sx = this.x.toString(2);
-    //var sy = this.y.toString(2);
-    //sx ="0000000000".substr(sx.length)+sx;
-    //sy ="0000000000".substr(sy.length)+sy;
-
-    //this.state.push(sx)
-    //this.state.push(sy);
-    var new_reward = 0;
+    this.reward = 0;
     //sensors first
     var s = {} ;
     var tx = 0.0;
@@ -132,22 +99,26 @@ Rover.prototype.get_reward = function() {
     for(var ss = 0;ss < this.num_sensors; ss++) {
         var final_status = 0;
         s = this.sensors[ss];
+
+if (s.status > 4) {
+    console.log("sensor : ",s)
+}
+
         var stemp = s.status.toString(2);
         stemp ="0000".substr(stemp.length)+stemp;
         //this.state.push(stemp); 
         this.state.push(s.status);
         //walls numbered 1-4
         if (s.status > 0 && s.status < 5) {
-           new_reward += -9;
+           this.reward += .01;
+           continue
         }
         //food
         if (s.status == 5) {
-           new_reward += 50;
+           this.reward += 10.0;
         }
-
-        //others
-        if (s.status == 6) {
-           new_reward += -1;
+        if (s.status == 0) {
+             this.reward+= 1.0
         }
      } //end of loop on sensors
     //now do checks on rover center
@@ -155,26 +126,18 @@ Rover.prototype.get_reward = function() {
     var border_status = 0;
     border_status = check_borders(this.x,this.y,this.r);
     if (border_status > 0 && border_status < 5 ) {
-       new_reward += -1;
+       //this.reward += 0.01;
     }
 
     //food
     var food_status = 0;
     food_status = check_food(this.x,this.y);
     if (food_status > 0) {
-       new_reward += 100;
+       //this.reward += 20.0;
     }
 
-    //if hit another rover
-    //var rover_status = 0;
-    //rover_status = check_other_rovers(this.id,this.x,this.y);
-    //if (rover_status > 0) {
-     //  new_reward += -5;
-    //}
-
     //just for breathing 
-    new_reward += 1;
-    return new_reward;
+    this.reward += 0.01;
 }
 //end of reward
 
@@ -183,10 +146,9 @@ function reset_rover_positions(rovers) {
     best = -9999;
     worst = 9999;
 
-    for (var nn = 0; nn < num_rovers; nn++) {
-        rovers[nn].reset_position();
+        rover.reset_position();
 
-        r = rovers[nn].reward;
+        r = rover.reward;
         if (r > best) {
             best = r;
         }
@@ -194,10 +156,7 @@ function reset_rover_positions(rovers) {
             worst = r;
         }
         sum += r
-        rovers[nn].reward = 0;
-    }
-    //end of loop
-    console.log("SUM: \t", sum, "\tBEST:\t", best, "\tWORST:\t", worst);
+        rover.reward = 0;
 }
 
 Rover.prototype.reset_position = function() {

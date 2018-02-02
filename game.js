@@ -2,9 +2,13 @@ var ws
 var pause = false
 
 function get_new_radians(angle_rec) {
+    if (angle_rec == 0 ) {
+        return 0;
+    }
+
     var angle = 0.0;
-    var delta = 2.0 * Math.PI /8.0;
-    angle = angle_rec.Angle * delta;
+    var delta = 2.0 * Math.PI /4.0;
+    angle = angle_rec * delta;
     return angle;
 }
 
@@ -24,19 +28,12 @@ function WebsocketStart() {
     }
 
     ws.onmessage = function(e) {
-console.log("message: ",e.data);
-
-      n = e.data.indexOf("angles);
+      n = e.data.indexOf("Angle");
       if (n != -1 ) {
          var response = JSON.parse(e.data)
-         angles = response.Angle_records
-         for (var iang=0;iang < angles.length;iang++) {
-            angle_rec = angles[iang] 
-            rovers[angle_rec.Id].angle = get_new_radians(angle_rec);
-          } //end of loop on iang
+         rover.angle = get_new_radians(response.Angle);
       } //end of found 'angle'
     } //endo of onmessage
-
 
     ws.onerror = function(evt) {
         console.log('onerror ',evt.data);
@@ -53,41 +50,24 @@ senddata = function(data) {
         return false;
     }
     stuff = JSON.stringify(data);
+    console.log("SENDING : ",stuff)
     ws.send(stuff);
 } //end of function senddata
 
 function setup() {
     make_foods(num_foods);
     reset_food_positions();
-    team = new Team(num_rovers,num_inputs);
-    console.log("TEAM: ",team)
-    //senddata(team);
-    rovers = make_rovers(team);
-console.log("rovers: ",rovers)
-
-    console.log('after making rovers');
-    episode_knt = 0;
-    num_episodes = 0;
-
+    rover = make_rover();
+    console.log("rover: ",rover)
 } //end of setup
     
 function updateGameArea() {
     if (pause) {
        return
     }
-    if (episode_knt >= 580) {
-       var mydata = {};
-       reset_rover_positions(rovers);
-       mydata['num_episodes'] =  num_episodes;
-       senddata(mydata);
-       episode_knt = 0;
-       reset_food_positions();
-       num_episodes++;
-
-} //end of if on episode_knt
 
     myGameArea.clear();
-    update_rovers(team,rovers);
+    update_rover(rover);
     update_foods();
     episode_knt+= 1;
 } //end of updateGameArea

@@ -33,9 +33,10 @@ func get_parameters() {
 
         parameters.N = 100
         parameters.Prob_sharp = 0.20
-        parameters.Prediction_initial = 10.0 //make this relative to reward
+        parameters.Prediction_initial = 20.0 //make this relative to reward
         parameters.Gamma = 0.71
-        parameters.V = 5
+        parameters.Epsilon_zero = 0.2
+        parameters.V = -5.0
         parameters.Theta_ga = 25.0 //adjust
         parameters.Chi = 0.5
         //parameters.Mu = 0.025
@@ -48,7 +49,7 @@ func get_parameters() {
         parameters.Fitness_initial = 0.00001
         parameters.Theta_mna = 5  //equal to the number of actions..could be smaller
         parameters.Prob_explor = 0.5
-        parameters.Do_ga_subsumption = true
+        parameters.Do_ga_subsumption = false
         parameters.Do_action_set_subsumption = true
 
         fmt.Printf("PARAMETERS %v ",parameters)

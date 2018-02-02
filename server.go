@@ -39,10 +39,12 @@ func talk(w http.ResponseWriter, r *http.Request) {
 //fmt.Println("JUNK: ",junk)
 
 		if strings.Contains(junk, "state") {
-			message = do_lcs( message)
-                        fmt.Println("back - message is ",message)
+                        //[]byte in , []byte out
+			message = get_action(message)
 			err = c.WriteMessage(mt, message)
-                       
+                      
+                        update_lcs()
+ 
 			if err != nil {
 				log.Println("write:", err)
 				break
@@ -68,7 +70,9 @@ func main() {
 	flag.Parse()
 	log.SetFlags(0)
         get_parameters()
-        p.Classifiers = nil
+        p = nil
+        reward_minus_one = 0.0
+        my_time = 0.0
 
 	http.HandleFunc("/talk", talk)
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {

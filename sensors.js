@@ -33,7 +33,7 @@ Rover.prototype.set_sensor_positions = function() {
     }
 } 
 
-Rover.prototype.get_sensor_data = function(id) {
+Rover.prototype.get_sensor_data = function() {
     var status = 0;
     var border_status = -9;
     //food 
@@ -71,26 +71,21 @@ Rover.prototype.get_sensor_data = function(id) {
 
         status = check_food(s.xpos,s.ypos,1);
         if (status == 5 ) {
+console.log("sensor ",ss, "found food status : ",status)
             this.sensors[ss].status = status; //greater than wall index
-            continue;
         }
-        //status = check_other_rovers(id,s.xpos,s.ypos);
-        //if (status == 6 ) {
-         //   this.sensors[ss].status = status;
-          //  continue;
-        //}
     } //end of loop on sensors
 }
 //end of get_sensor_data function
 
-function check_food(xp,yp) {
+function check_food(xp,yp,radius) {
         var status = 0;
         for (var i = 0; i < num_foods; i++) {
             f = foods[i];
             test = f.r;
             dist = Math.hypot((f.x - xp), (f.y - yp));
             if (dist <= test) {
-                status = 1;
+                status = 5;
                 break;
             } //end if food if
         } //end of loop on food

@@ -10,9 +10,9 @@ func run_ga() {
     sum := 0.0
     nsum:= 0.0
     i := 0
-    for i=0;i<len(action_set.Classifiers);i++ {
-        sum += float64(action_set.Classifiers[i].ts) * action_set.Classifiers[i].n
-        nsum += action_set.Classifiers[i].n
+    for i=0;i<len(A1);i++ {
+        sum += float64(A1[i].ts) * A1[i].n
+        nsum += A1[i].n
     }
     avg := sum/nsum;
     fmt.Printf("my_time: %f sum %f nsum %f Avg %f  Theta_ga %f \n",my_time,sum,nsum,avg,parameters.Theta_ga)
@@ -29,12 +29,12 @@ func run_ga() {
     var parent1 Classifier
     var child []Classifier
 
-    l := len(action_set.Classifiers)
+    l := len(A1)
     fmt.Printf("before loop length action set classifiers %d\n",l)
  
-    for i=0;i<len(action_set.Classifiers);i++ {
-fmt.Printf("action set classifier %d \n %+v \n",i,action_set.Classifiers[i])
-          action_set.Classifiers[i].ts = my_time
+    for i=0;i<len(A1);i++ {
+fmt.Printf("action set classifier %d \n %+v \n",i,A1[i])
+          A1[i].ts = my_time
           parent0 = select_offspring()
           parent1 = select_offspring()
           
@@ -80,7 +80,7 @@ fmt.Println("DOING CHILD STUFF")
 
                delete_from_population()
            } //end of loop on child 
-    } //end of loop on classifiers in action_set
+    } //end of loop on classifiers in A1
 fmt.Println("leaving run ga after doing ga")
 } //end of run_ga
 
@@ -88,21 +88,21 @@ func select_offspring() Classifier {
 
     fitness_sum := 0.0
     i := 0
-    for i=0;i<len(action_set.Classifiers);i++ {
-         fitness_sum += action_set.Classifiers[i].F
+    for i=0;i<len(A1);i++ {
+         fitness_sum += A1[i].F
     }
     choice_point := rand.Float64() * fitness_sum
     fitness_sum = 0.0
     pindex := 0
-    for i=0;i<len(action_set.Classifiers);i++ {
-         fitness_sum += action_set.Classifiers[i].F
+    for i=0;i<len(A1);i++ {
+         fitness_sum += A1[i].F
          if fitness_sum > choice_point {
            pindex = i 
            break
         } //end of if on fitness
     } //end of loop on i
            
-    return action_set.Classifiers[pindex]
+    return A1[pindex]
 
 } //end of select_offspring
 
@@ -130,12 +130,11 @@ func apply_mutation(condition string) string {
     fmt.Printf("state  %s\n",state_string)
     i := 0
     temp := []byte(condition)
-    //fmt.Printf("after convert %s Mu: %f \n",temp,parameters.Mu)
-//fmt.Printf("LENGTH OF TEMP: %d \n",len(temp))
+    fmt.Printf("after convert %s Mu: %f \n",temp,parameters.Mu)
+    fmt.Printf("LENGTH OF TEMP: %d \n",len(temp))
 
     for i=0;i<len(temp);i++ {
          if rand.Float64() < parameters.Mu {
-fmt.Println("GOT A MUTATE")
              if temp[i] == '#' {
                 temp[i] = state_string[i]
              } else {
@@ -150,24 +149,25 @@ fmt.Println("GOT A MUTATE")
 
 
 func insert_in_population(cl Classifier) {
+fmt.Printf("in insert_in_population cl: %+v\n",cl)
     i := 0
-    for i=0;i<len(p.Classifiers);i++ {
-         if p.Classifiers[i].Condition == cl.Condition &&
-            p.Classifiers[i].Action == cl.Action {
-                p.Classifiers[i].n++
+    for i=0;i<len(p);i++ {
+         if p[i].Condition == cl.Condition &&
+            p[i].Action == cl.Action {
+                p[i].n++
                 return
          }
     }
-    p.Classifiers = append(p.Classifiers,cl)
+    p = append(p,cl)
 } //end of insert_in_population
 
 func delete_from_population() {
     sum := 0.0
     fsum := 0.0
     i := 0
-    for i=0;i<len(p.Classifiers);i++ {
-        sum += p.Classifiers[i].n
-        fsum += p.Classifiers[i].F
+    for i=0;i<len(p);i++ {
+        sum += p[i].n
+        fsum += p[i].F
     }
 
     if sum < float64(parameters.N) {
@@ -176,19 +176,19 @@ func delete_from_population() {
 
     av_fitness_in_population := sum/fsum 
     vote_sum := 0.0
-    for i=0;i<len(p.Classifiers);i++ {
-       vote_sum += deletion_vote(p.Classifiers[i],av_fitness_in_population)
+    for i=0;i<len(p);i++ {
+       vote_sum += deletion_vote(p[i],av_fitness_in_population)
     }
 
     choice_point := rand.Float64() * vote_sum
     vote_sum = 0.0
-    for i=0;i<len(p.Classifiers);i++ {
-       vote_sum += deletion_vote(p.Classifiers[i],av_fitness_in_population)
+    for i=0;i<len(p);i++ {
+       vote_sum += deletion_vote(p[i],av_fitness_in_population)
        if vote_sum > choice_point {
-           if p.Classifiers[i].n > 1 {
-              p.Classifiers[i].n--
+           if p[i].n > 1 {
+              p[i].n--
            } else {
-             remove_classifier_from_population(p.Classifiers[i])
+             remove_classifier_from_population(i)
            }
        return
 
@@ -206,43 +206,43 @@ func deletion_vote(cl Classifier, av_fit float64) float64 {
     return vote
 } //end of deletion vote
 
-func do_action_set_subsumption() {
+func do_A1_subsumption() {
     var cl *Classifier
 
 //    cl = make_classifier()
     c_num_dont_cares := 0
     cl_num_dont_cares := 0
     i := 0
-    for i=0;i<len(action_set.Classifiers);i++ {
-       c_num_dont_cares = get_num_dont_care(action_set.Classifiers[i].Condition)
+    for i=0;i<len(A1);i++ {
+       c_num_dont_cares = get_num_dont_care(A1[i].Condition)
        cl_num_dont_cares = get_num_dont_care(cl.Condition)
  
-       if could_subsume(action_set.Classifiers[i]) {
+       if could_subsume(A1[i]) {
           if cl == nil || c_num_dont_cares > cl_num_dont_cares  {
               //from to
               //cl is already a pointer
-              my_copy(cl,&action_set.Classifiers[i])
+              my_copy(cl,&A1[i])
           }
 
           if c_num_dont_cares == cl_num_dont_cares && rand.Float64() < 0.5 {
               //from to
-              my_copy(cl,&action_set.Classifiers[i])
+              my_copy(cl,&A1[i])
           }
        }
     } //end of loop on c
 
     if cl != nil {
         i := 0
-        for i=0;i<len(action_set.Classifiers);i++ {
-          if is_more_general(cl,action_set.Classifiers[i]) {
-                cl.n = cl.n + action_set.Classifiers[i].n
-                remove_classifier_from_action_set(action_set.Classifiers[i])
-                remove_classifier_from_population(action_set.Classifiers[i])
+        for i=0;i<len(A1);i++ {
+          if is_more_general(cl,A1[i]) {
+                cl.n = cl.n + A1[i].n
+                remove_classifier(A1,i)[_from_A1(A1[i])
+                remove_classifier_from_population(A1[i])
             }
         }
     } //end of if on nil
 
-} //end of do_action_set_subsumption
+} //end of do_A1_subsumption
 
 func could_subsume(cl Classifier) bool {
     if cl.Exp > parameters.Theta_sub {
@@ -283,8 +283,12 @@ func my_copy(from *Classifier, to *Classifier) {
     *to = *from
 }
 
-func remove_classifier_from_population(cl Classifier) {
-    fmt.Printf("removing %v\n",cl)
+func remove_classifier_from_population(index int) {
+    fmt.Printf("index %d removing %v\n",index,p[i])
+    fmt.Printf("before length of p %4d \n",len(p))
+    p[len(p)-1],p[index] = p[index],p[len(p) -1]
+    p = p[:len(p) -1]
+    fmt.Printf("after length of p %4d \n",len(p))
 }
 
     
@@ -299,6 +303,6 @@ func get_num_dont_care(condition string) int {
      return knt
 }
 
-func remove_classifier_from_action_set(cl Classifier) {
-     fmt.Println("removing from action set ")
+func remove_classifier_from_A1(cl Classifier) {
+     fmt.Println("NOT FINISHED !!!!!! removing from action set ")
 }
