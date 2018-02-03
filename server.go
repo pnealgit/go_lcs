@@ -70,7 +70,7 @@ func main() {
 	flag.Parse()
 	log.SetFlags(0)
         get_parameters()
-        p = nil
+        p = make(map[string]Classifier)
         reward_minus_one = 0.0
         my_time = 0.0
 

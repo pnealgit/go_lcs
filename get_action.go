@@ -34,10 +34,10 @@ type Classifier struct {
     n   float64                  //numerosity
 }
 
-var p []Classifier
-var m []Classifier
-var A []Classifier
-var A1 []Classifier
+var p = map[string]Classifier{}
+var m = map[string]Classifier{}
+var A = map[string]Classifier{}
+var A1 = map[string]Classifier{}
 
 var my_time float64
 var action int
@@ -119,11 +119,10 @@ func convert_state_input(state_record State_record) string {
 }
 
 func dump_population() {
-     i := 0
-     kntr := make(map[string]int)
 
-     for i=0;i<len(p);i++ {
-       kntr[p[i].Condition]++
+     kntr := make(map[string]int)
+     for _,v := range p {
+       kntr[v.Condition]++
      }
      for k,v := range kntr {
         fmt.Printf("%d %s\n",v,k)
@@ -134,19 +133,18 @@ func dump_population() {
 func dump_match_set(state_string string) {
      fmt.Println("DUMP MATCH SET \n")
      fmt.Printf( "%s\n",state_string)
-     i := 0
      kntr := make(map[string]int)
      kntr2 := make(map[int]int)
 
-     for i=0;i<len(m);i++ {
-       kntr[m[i].Condition]++
+     for _,v := range m {
+       kntr[v.Condition]++
      }
      for k,v := range kntr {
         fmt.Printf("Match set %d %s\n",v,k)
      }
 
-     for i=0;i<len(m);i++ {
-       kntr2[m[i].Action]++
+     for _,v := range m {
+       kntr2[v.Action]++
      }
      fmt.Printf("Action Counts\n")
 
@@ -160,17 +158,16 @@ func dump_match_set(state_string string) {
 func generate_prediction_array() {
     fmt.Printf("in prediction array")
 
-    i := 0
     pa := make(map[int]float64) 
     fsa := make(map[int]float64) 
 
-    for i=0;i<len(m);i++ {
-        pa[m[i].Action] += m[i].p * m[i].F
-        fsa[m[i].Action] += m[i].F
+    for _,v := range m {
+        pa[v.Action] += v.p * v.F
+        fsa[v.Action] += v.F
     } 
-    for i:=0;i<len(possible_actions);i++ {
-        if fsa[i] > 0.0 {
-            pa[i] = pa[i]/fsa[i]
+    for k,_ := range possible_actions {
+        if fsa[k] > 0.0 {
+            pa[k] = pa[k]/fsa[k]
         }
     }
     fmt.Printf("PA %+v\n",pa)
@@ -200,12 +197,17 @@ func get_max_pa() {
 } //end of get_max
 
 func generate_action_set() {
-   A = nil
-   i := 0
-   for i=0;i<len(m);i++ {
-      if m[i].Action == action {
-         A = append(A,m[i])
+   A = make(map[string]Classifier)
+   fmt.Printf("entering gen action set len m %4d \n",len(m))
+   
+   for k,v := range m {
+      fmt.Printf("GENERATE ACTION SET M: %+v \n",v)
+
+      if v.Action == action {
+         A[k] = v
       }
    }
+   fmt.Printf("leaving gen action set len A %4d \n",len(A))
+
 } //end of generate action set
 

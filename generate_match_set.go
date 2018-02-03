@@ -3,36 +3,39 @@ package main
 import ( 
     "math/rand"
     "fmt"
+    "strconv"
+    "os"
 )
 
 const dont_care = '#'
 
 func generate_match_set(state_string string) {
-    fmt.Printf("in match set string is: %s \n",state_string)
-
-    m = nil
-    i := 0
-    for i = 0; i<len(p);i++ {
-        if len(p[i].Condition) < 5 {
-           fmt.Printf("P - I: %4d %s %s \n",i,state_string,p[i].Condition)
-           fmt.Printf("cl %+v\n",p[i])
-        }
-
-        if is_match(state_string,p[i].Condition) {
-            m = append(m,p[i])
+    m = make(map[string]Classifier)
+    fmt.Printf("M: %+v \n",m)
+ 
+    for k,v := range p {
+        if is_match(state_string,v.Condition) {
+            m[k] = v
         }
     }
-    fmt.Printf("after appending to me len m is %d \n",len(m))
+   
+    fmt.Printf("after appending to m len m is %d \n",len(m))
+    for k,v := range m {
+       fmt.Printf("M - K %s V: %+v \n",k,v)
+    }
 
     if len(m) <= parameters.Theta_mna {
         fmt.Println("going to cover")
         cover(state_string)
-        fmt.Println("back from cover")
+        fmt.Printf("back from cover len M : %d \n",len(m))
     }
 } //end of generate_match_set
 
 func is_match(state_string string,cc string) bool {
     i := 0
+fmt.Printf("ss: %s\n",state_string)
+fmt.Printf("cc: %s\n",cc)
+
     for i=0;i<len(state_string);i++ {
         if state_string[i] == cc[i] || 
            cc[i] == dont_care {
@@ -41,6 +44,7 @@ func is_match(state_string string,cc string) bool {
            return false
         }
     }
+    fmt.Printf("MATCH \n")
     return true
 } //end of is_match
 
@@ -49,27 +53,36 @@ func cover(state_string string) {
 
     //setup temp map for counting what actions are used in covering
     var c Classifier
-
-    i := 0
-    for i=0;i<len(possible_actions);i++ {
-        possible_actions[i] = 0
+    for k,_ := range possible_actions {
+       possible_actions[k] = 0
     }
-    fmt.Printf("possibles for cover: %+v\n",possible_actions)
-    for i=0;i<len(m);i++ {
-       possible_actions[m[i].Action]++
+    for _,v1 := range m {
+       possible_actions[v1.Action]++
     }
     fmt.Printf("possible_actions after m: %+v\n",possible_actions)
  
-    for k,v := range possible_actions {
-       if v <= 0 {
-           c = make_classifier(state_string,k)
+    for k1,v1 := range possible_actions {
+       if v1 <= 0 {
+           c = make_classifier(state_string,k1)
            fmt.Printf("MAKE C: %+v\n",c) 
-           p = append(p,c)
-           m = append(m,c)
+           ka := make_key(c.Condition,c.Action)
+           
+           p[ka] = c
+           m[ka] = c
            fmt.Printf("After cover append len P %d\n",len(p))
+           fmt.Printf("After cover append len M %d\n",len(m))
        }
     }
 } //end of cover
+
+func make_key(condition string, action int) string {
+     if len(condition) == 0 {
+        fmt.Printf("CONDITION IS %s\n",condition)
+        os.Exit(5)
+     }
+     new_k := condition + strconv.Itoa(action)
+     return new_k
+}
 
 func make_classifier(state_string string,action int ) Classifier {
     var c Classifier
