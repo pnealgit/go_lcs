@@ -39,20 +39,17 @@ func talk(w http.ResponseWriter, r *http.Request) {
 //fmt.Println("JUNK: ",junk)
 
 		if strings.Contains(junk, "state") {
-                        //[]byte in , []byte out
+                        //send back an action immediately
 			message = get_action(message)
 			err = c.WriteMessage(mt, message)
-                      
+                     
+                        //update A and A1 
                         update_lcs()
  
 			if err != nil {
 				log.Println("write:", err)
 				break
 			} //end of if on write
-		}
-
-		if strings.Contains(junk, "num_episodes") {
-			fmt.Println("NUM EPISODES!!")
 		}
 
 		outmap := make(map[string]string)

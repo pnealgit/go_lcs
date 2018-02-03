@@ -2,12 +2,8 @@ var ws
 var pause = false
 
 function get_new_radians(angle_rec) {
-    if (angle_rec == 0 ) {
-        return 0;
-    }
-
     var angle = 0.0;
-    var delta = 2.0 * Math.PI /4.0;
+    var delta = 2.0 * Math.PI /8.0;
     angle = angle_rec * delta;
     return angle;
 }
@@ -31,6 +27,8 @@ function WebsocketStart() {
       n = e.data.indexOf("Angle");
       if (n != -1 ) {
          var response = JSON.parse(e.data)
+         rover.last_received_angle = rover.received_angle
+         rover.received_angle = response.Angle; 
          rover.angle = get_new_radians(response.Angle);
       } //end of found 'angle'
     } //endo of onmessage

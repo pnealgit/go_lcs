@@ -31,22 +31,22 @@ var parameters Parameters
 
 func get_parameters() {
 
-        parameters.N = 100
-        parameters.Prob_sharp = 0.20
-        parameters.Prediction_initial = 20.0 //make this relative to reward
+        parameters.N = 200
+        parameters.Beta =  0.15
+        parameters.Alpha = 0.1
         parameters.Gamma = 0.71
         parameters.Epsilon_zero = 0.2
+        parameters.Sigma = 0.1
         parameters.V = -5.0
         parameters.Theta_ga = 25.0 //adjust
         parameters.Chi = 0.5
-        //parameters.Mu = 0.025
-        parameters.Mu = 0.25
+        parameters.Mu = 0.025
         parameters.Theta_del = 20
-        parameters.Sigma = 0.1
         parameters.Theta_sub = 20
         parameters.Prediction_initial = 0.00001
         parameters.Epsilon_initial = 0.00001
         parameters.Fitness_initial = 0.00001
+        parameters.Prob_sharp = 0.33
         parameters.Theta_mna = 5  //equal to the number of actions..could be smaller
         parameters.Prob_explor = 0.5
         parameters.Do_ga_subsumption = false
@@ -58,7 +58,7 @@ func get_parameters() {
         //used in testing for cover
         possible_actions = make(map[int]int) 
         i := 0
-        for i=0;i<5;i++ {
+        for i=0;i<8;i++ {
              possible_actions[i] = 0
         }
 } //end of get_parameters

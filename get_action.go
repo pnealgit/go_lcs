@@ -23,8 +23,8 @@ var state_record State_record
 var angle_record Angle_record
 
 type Classifier struct {
-    Condition    string
-    Action       int
+    Condition    string       //what was sent from sensors
+    Action       int          //what was result of thinking about condition
     p            float64      //predicted payoff
     Epsilon float64
     F            float64      //fitness
@@ -43,14 +43,13 @@ var my_time float64
 var action int
 
 var state_string string
-var pa  map[int]float64 //prediction array
+var prediction_array  map[int]float64 //prediction array
 
 var reward float64
 var reward_minus_one float64
 
 func get_action( message []byte) []byte {
       
-  
 	var err error
         var state_record State_record
 
@@ -61,34 +60,21 @@ func get_action( message []byte) []byte {
 	} //end of if on jerr
         state_string = ""
         state_string = convert_state_input(state_record)
-
+        if len(state_string) < 5 {
+           fmt.Printf("State string length < 5 %d \n",len(state_string))
+           fmt.Printf("Exiting ...  ")
+           os.Exit(6)
+        }
         reward = state_record.Reward
-        if reward > 1.0 {
-           fmt.Printf("reward big : %f \n",reward) 
-        }
 
-        fmt.Printf("REWARD IS: %f\n",reward)
-
-        if len(state_string) != 36 {
-            fmt.Printf("length is : %4d\n",len(state_string))
-            fmt.Printf("%v\n",state_record)
-            fmt.Printf("%s\n",state_string)
-            os.Exit(2)
-        }
-   
         my_time++ 
-        fmt.Printf("calling match set with string %s\n",state_string)
-
         generate_match_set(state_string)
-fmt.Printf("back from generate match set\n")
-
         generate_prediction_array()
         select_action()
         generate_action_set()
 
         angle_record.Angle = action
         angle_record.Status = "angle"
-        fmt.Printf("returning angle_record %+v\n",angle_record)
 	message,err  = json.Marshal(angle_record)
         if err != nil {
                 fmt.Println("bad angles Marshal")
@@ -96,22 +82,20 @@ fmt.Printf("back from generate match set\n")
 	return message
 } //end of do_update
 
-func think(state_record State_record) float64 {
-	return 1.0	
-} //end of think
-
 func convert_state_input(state_record State_record) string {
     var s bytes.Buffer
-    
     si := ""
     i := 0
-    si = fmt.Sprintf("%06b",state_record.State[0]%20)
+    si = fmt.Sprintf("%03b",state_record.State[0])
     s.WriteString(si)
 
     si = fmt.Sprintf("%06b",state_record.State[1]%20)
     s.WriteString(si)
 
-    for i=2;i<len(state_record.State);i++ {
+    si = fmt.Sprintf("%06b",state_record.State[2]%20)
+    s.WriteString(si)
+
+    for i=3;i<len(state_record.State);i++ {
         si = fmt.Sprintf("%04b",state_record.State[i])
         s.WriteString(si)
     }
@@ -154,60 +138,70 @@ func dump_match_set(state_string string) {
 
 } //end of dump_match_set
 
-
 func generate_prediction_array() {
-    fmt.Printf("in prediction array")
-
-    pa := make(map[int]float64) 
+    prediction_array = make( map[int]float64)
     fsa := make(map[int]float64) 
+    for k,_ := range prediction_array {
+        delete(prediction_array,k)
+    }
 
     for _,v := range m {
-        pa[v.Action] += v.p * v.F
+        prediction_array[v.Action] += v.p * v.F
         fsa[v.Action] += v.F
     } 
     for k,_ := range possible_actions {
         if fsa[k] > 0.0 {
-            pa[k] = pa[k]/fsa[k]
+            prediction_array[k] = prediction_array[k]/fsa[k]
         }
     }
-    fmt.Printf("PA %+v\n",pa)
+    fmt.Printf("PA %+v\n",prediction_array)
 }
 func select_action() {
     action = 0
     if rand.Float64() < parameters.Prob_explor {
         //explore
-        fmt.Println("explore")
         action = rand.Intn(len(possible_actions))
+        fmt.Printf("explore action is %d \n",action)
+        get_max_pa()
     } else {
         //exploit
-        fmt.Println("exploit")
         get_max_pa()
+        get_max_pa_action()
+        fmt.Printf("exploit action is %d \n",action)
     } //end of exploit
 } //end of select_action
 
 func get_max_pa() {
-    pa_max := -999.9
-    for k,v := range pa {
-        fmt.Printf("k %3d v %f \n",k,v)
-        if v > pa_max {
+
+    max_pa = -999.9
+    for _,v := range prediction_array {
+        if v > max_pa {
+             max_pa = v
+        }
+    } //end of loop
+    fmt.Printf("IN GET_MAX_PA pa is %+v MAX: %f ",prediction_array ,max_pa )
+
+} //end of get_max
+
+func get_max_pa_action() {
+    zmax_pa := -999.9
+    for k,v := range prediction_array {
+        if v > zmax_pa {
              action = k
-             pa_max = v
+             zmax_pa = v
         }
     } //end of loop
 } //end of get_max
 
 func generate_action_set() {
-   A = make(map[string]Classifier)
-   fmt.Printf("entering gen action set len m %4d \n",len(m))
+   for k,_ := range A {
+       delete(A,k)
+   }
    
    for k,v := range m {
-      fmt.Printf("GENERATE ACTION SET M: %+v \n",v)
-
       if v.Action == action {
          A[k] = v
       }
    }
-   fmt.Printf("leaving gen action set len A %4d \n",len(A))
-
 } //end of generate action set
 
