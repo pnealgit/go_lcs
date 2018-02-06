@@ -37,22 +37,30 @@ func delete_from_population() {
         return
     }
 
-    av_fitness_in_population := sum/fsum 
+    av_fitness_in_population := 0.0
+    av_fitness_in_population = fsum/sum 
     vote_sum := 0.0
     for _,v := range p {
        vote_sum += deletion_vote(v,av_fitness_in_population)
     }
 
-    choice_point := rand.Float64() * vote_sum
+    //fmt.Printf("vote_sum: %f\n",vote_sum)
+    dooby := 0.0
+    dooby = rand.Float64()
+    choice_point := 0.0
+    choice_point = dooby * vote_sum
+    //fmt.Printf("vote_sum: %f dooby %f choice_point: %f\n",vote_sum,dooby,choice_point)
+    
     vote_sum = 0.0
     for k,v := range p {
        vote_sum += deletion_vote(v,av_fitness_in_population)
        if vote_sum > choice_point {
-           if v.n > 1 {
+           if v.n > 1.0 {
               v.n--
               p[k] = v
            } else {
-             delete(p,k)
+              delete(p,k)
+              break
            }
        } //end of if on choice_point
     } //end of loop on k,v
@@ -60,8 +68,9 @@ func delete_from_population() {
 
 func deletion_vote(cl Classifier, av_fit float64) float64 {
     vote := cl.as * cl.n
-    if cl.Exp > float64(parameters.Theta_del) && cl.F/cl.n < parameters.Sigma * av_fit {
-         vote = vote * av_fit/(cl.F/cl.n)
+    duh := cl.F/cl.n
+    if cl.Exp > float64(parameters.Theta_del) && duh < parameters.Sigma * av_fit {
+         vote = vote * av_fit/duh
     }
     return vote
 } //end of deletion vote

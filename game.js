@@ -1,6 +1,8 @@
 var ws
 var pause = false
 
+var send_count = 0
+
 function get_new_radians(angle_rec) {
     var angle = 0.0;
     var delta = 2.0 * Math.PI /8.0;
@@ -29,7 +31,7 @@ function WebsocketStart() {
          var response = JSON.parse(e.data)
          rover.last_received_angle = rover.received_angle
          rover.received_angle = response.Angle; 
-         rover.angle = get_new_radians(response.Angle);
+         rover.angle = rover.sensors[response.Angle].angle
       } //end of found 'angle'
     } //endo of onmessage
 
@@ -48,7 +50,13 @@ senddata = function(data) {
         return false;
     }
     stuff = JSON.stringify(data);
-    console.log("SENDING : ",stuff)
+    //stick in some monitoring stuff here
+    send_count++;
+    if ((send_count % 100) == 0 ) {
+        console.log("KNT: ",send_count)
+        console.log(data)
+        console.log("\n")
+    }
     ws.send(stuff);
 } //end of function senddata
 

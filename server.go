@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+        "math"
 )
 
 
@@ -38,7 +39,7 @@ func talk(w http.ResponseWriter, r *http.Request) {
 		junk := string(message)
 //fmt.Println("JUNK: ",junk)
 
-		if strings.Contains(junk, "state") {
+		if strings.Contains(junk, "State") {
                         //send back an action immediately
 			message = get_action(message)
 			err = c.WriteMessage(mt, message)
@@ -66,10 +67,16 @@ func talk(w http.ResponseWriter, r *http.Request) {
 func main() {
 	flag.Parse()
 	log.SetFlags(0)
+
+        //fix this so it is coordinated
+        canvas_width = 480
+        canvas_height = 300
+        canvas_max_distance = math.Hypot(canvas_width,canvas_height)
         get_parameters()
         p = make(map[string]Classifier)
         reward_minus_one = 0.0
         my_time = 0.0
+        sum_reward = 0.0
 
 	http.HandleFunc("/talk", talk)
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {

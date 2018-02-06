@@ -7,6 +7,7 @@ import (
 )
  
 func run_ga() {
+    fmt.Printf("IN GA\n")
     sum := 0.0
     nsum:= 0.0
     for _,v := range A1 {
@@ -14,10 +15,9 @@ func run_ga() {
         nsum += v.n
     }
     avg := sum/nsum;
-    if my_time - avg < parameters.Theta_ga || len(A1) < 2 {
+    if my_time - avg < parameters.Theta_ga {
        return
     }
-
     var parent0 Classifier
     var parent1 Classifier
     var child  []Classifier
@@ -32,6 +32,8 @@ func run_ga() {
     parent0 = A1[p0x]
     parent1 = A1[p1x]
 
+    fmt.Printf("LEN A1 %d ACTION IN GA: %d\n",len(A1),parent0.Action)
+
     child = append(child,Classifier{})
     child = append(child,Classifier{})
     my_copy(&parent0,&child[0])
@@ -41,26 +43,17 @@ func run_ga() {
     child[1].n = 1
     child[0].Exp = 0
     child[1].Exp = 0
-    fmt.Printf("c0 %+v\n",child[0]);
-    fmt.Printf("p0 %+v\n",parent0);
-    fmt.Printf("c1 %+v\n",child[1]);
-    fmt.Printf("p1 %+v\n",parent1);
-
+    
     if rand.Float64() < parameters.Chi {
-          apply_crossover(&child[0],&child[1])
-     
+          child[0].Condition,child[1].Condition = apply_crossover(child[0].Condition,child[1].Condition)
           child[0].p = (parent0.p + parent1.p)/2
           child[0].Epsilon = (parent0.Epsilon + parent1.Epsilon)/2
           child[0].F = (parent0.F + parent1.F)/2
           child[1].p = child[0].p
           child[1].Epsilon = child[0].Epsilon
           child[1].F = child[0].F
-          fmt.Printf("after crossover\n")
-          fmt.Printf("c0 %+v\n",child[0]);
-          fmt.Printf("p0 %+v\n",parent0);
-          fmt.Printf("c1 %+v\n",child[1]);
-          fmt.Printf("p1 %+v\n",parent1);
     }
+
     child[0].F = child[0].F * 0.1
     child[1].F = child[1].F * 0.1
      
@@ -80,7 +73,7 @@ func run_ga() {
           } //end of if on do_ga
 
           //this means clean up population
-          delete_from_population()
+          //delete_from_population()
       } //end of loop on child 
 } //end of run_ga
 
@@ -110,18 +103,46 @@ func select_offspring()  string {
     return pindex  
 } //end of select_offspring
 
-func apply_crossover(c0,c1 *Classifier)  {
+func apply_crossover(c0 string ,c1 string)  (string,string){
+    //two point crossover
+    //swap values betweens 2 points
 
-    cut_point := rand.Intn(len(c0.Condition))
-    var tmp1a,tmp1b string
-    var tmp2a,tmp2b string
+    if c0 == c1 {
+        fmt.Printf("in crossover arguments are the same\n")
+    }
+
+    b0 := []byte(c0)
+    b1 := []byte(c1)
+
+    x := rand.Intn(len(b0) )
+    y := rand.Intn(len(b0) )
+
+    if x > y {
+       x,y = y,x
+    }
     
-    tmp1a = c0.Condition[cut_point:]
-    tmp1b = c0.Condition[:cut_point]
-    tmp2a = c1.Condition[cut_point:]
-    tmp2b = c1.Condition[:cut_point]
-    c0.Condition = tmp1a + tmp2b
-    c1.Condition = tmp2a + tmp1b
+    i := 0
+    //var tmp byte
+
+    for i=0;i<len(b0);i++ {
+        if i >= x && i <= y {
+             b0[i],b1[i] = b1[i],b0[i]
+        } 
+    }
+    if string(b0) == string(b1) {
+       if b0[x] == dont_care {
+           b0[x] = state_string_minus_one[x]
+       } else {
+           b0[x] = dont_care
+       }
+       if b1[y] == dont_care {
+           b1[y] = state_string_minus_one[y]
+       } else {
+           b1[x] = dont_care
+       }
+    }
+ 
+    return string(b0),string(b1)
 }
 
 func apply_mutation(condition string) string {
@@ -131,7 +152,7 @@ func apply_mutation(condition string) string {
     for i=0;i<len(temp);i++ {
          if rand.Float64() < parameters.Mu {
              if temp[i] == '#' {
-                temp[i] = state_string[i]
+                temp[i] = state_string_minus_one[i]
              } else {
                 temp[i] = '#'
              }

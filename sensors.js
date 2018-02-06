@@ -1,8 +1,6 @@
 
 Rover.prototype.make_sensors = function() {
-console.log("num sensors : ",this.num_sensors);
-
-    for (var ns = 0; ns < this.num_sensors; ns++) {
+    for (var ns = 0; ns < this.num_antennae; ns++) {
         var s = new Sensor();
         this.sensors.push(s);
     }
@@ -11,26 +9,45 @@ console.log("num sensors : ",this.num_sensors);
 function Sensor() {
       this.xpos = 0;
       this.ypos = 0;
+      this.angle = 0.0;
       this.status = 0;
 } //end of sensor 
 
 Rover.prototype.set_sensor_positions = function() {
-
+    //right now only 3 so minus delta_radians 0 delta radians and + delta_radians
     var tangle = this.angle- this.delta_radians;
-    var sensor_spacing = this.antenna_length / this.num_sensors_per_antenna;
-    var knt = 0;
-    var sr = this.r+this.antenna_length;
-    //going from the end in
-    for (var is=0;is<this.num_sensors_per_antenna;is++) {
-      sr -= sensor_spacing * is;
-      for (var ia =0;ia<this.num_antennae;ia++) {
-        //going towards center so first num_antennas are the ends of antennas
-        this.sensors[knt].ypos = Math.round(this.y + (sr * Math.sin(tangle)));
-        this.sensors[knt].xpos = Math.round(this.x + (sr * Math.cos(tangle)));
+    var delta_x = 0;
+    var delta_y = 0;
+    var velocity = 2.0;
+
+    for (var knt=0;knt<this.num_antennae;knt++ ){
+        this.sensors[knt].status = 0;
+        this.sensors[knt].xpos = this.x
+        this.sensors[knt].ypos = this.y
+        this.sensors[knt].angle = tangle
+
+        if (this.sensors[knt].status <= 0 ) {
+            //do nothing
+        } else {
+          console.log('something fishy')
+        }
+      
+        while (this.sensors[knt].status <= 0) {
+            delta_x = velocity * Math.cos(tangle)
+            delta_y = velocity * Math.sin(tangle)
+            this.sensors[knt].xpos += delta_x
+            this.sensors[knt].ypos += delta_y
+            this.sensors[knt].status = check_borders(this.sensors[knt].xpos,this.sensors[knt].ypos,1)
+            if (this.sensors[knt].status > 0.0) {
+               break;
+            }
+            this.sensors[knt].status = check_food(this.sensors[knt].xpos,this.sensors[knt].ypos,1)
+            if (this.sensors[knt].status > 0.0) {
+               break;
+            }
+        } //end of while
         tangle += this.delta_radians;
-        knt++;
-      } 
-    }
+      } //end of loop on knt
 } 
 
 Rover.prototype.get_sensor_data = function() {

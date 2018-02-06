@@ -41,7 +41,19 @@ function make_foods(num_foods) {
     y = 0;
     centerx = width/2
     centery = height/2
+    circ_radius = 100
+ 
+    w = width-100;
+    h = height-100;
     r = 15; //radius of food
-    foods[0] = new Food(centerx,centery);
+
+    delta_radians = (2.0*Math.PI)*(1.0/num_foods)
+    fangle = 0;
+    for (var fknt =0;fknt<num_foods;fknt++) {
+        py = centery + circ_radius*Math.sin(fangle)+Math.random()*2.0
+        px = centerx + circ_radius*Math.cos(fangle)+Math.random()*2.0
+        foods[fknt] = new Food(px,py);
+        fangle += delta_radians
+    }
 }//end of function make_foods
 

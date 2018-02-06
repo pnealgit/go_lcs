@@ -1,7 +1,7 @@
 function make_rover() {
     rover = {}
     rover = new Rover();
-    reset_rover_positions()
+    rover.make_sensors();
     return rover;
 }
 //end of function make_rover
@@ -10,26 +10,16 @@ function Rover() {
     this.x = getRandomInt(50,width-50);
     this.y = getRandomInt(50,height-50);
     this.r = 10;
-    this.sensors = [];
+    this.sensors =  [];
     this.num_antennae = 3;
-    this.num_sensors_per_antenna = 2;
-    this.num_sensors = this.num_antennae * this.num_sensors_per_antenna;
     this.velocity = 2.0;
-    this.antenna_length =  40
     this.delta_radians =  Math.PI/4.0
-
     this.state = [];
-    this.reward = 0.0;
     this.received_angle = getRandomInt(0,4)
     this.last_received_angle = getRandomInt(0,4)
-
     this.angle = 2.0*Math.PI * Math.random();
-    this.last_food_x = 0.0;
-    this.last_food_y = 0.0;
-
     this.dx = this.velocity * Math.cos(this.angle);
     this.dy = this.velocity * Math.sin(this.angle);
-    this.make_sensors();
 
     this.move = function() {
         this.dx = this.velocity * Math.cos(this.angle)
@@ -53,8 +43,6 @@ function Rover() {
 
         ctx.beginPath();
         ctx.strokeStyle = '#000000';
-        tangle = this.angle- this.delta_radians;
-       
         this.set_sensor_positions();
 	for (var s=0;s<this.num_antennae;s++) {
             ctx.moveTo(this.x,this.y);
@@ -69,17 +57,16 @@ function Rover() {
 //end of Rover function
 
 function update_rover() {
-
     my_data = {};
+    //rover.make_sensors()
     rover.get_sensor_data();
-    rover.get_reward();
-if (rover.reward > 1 ) {
-    console.log("ROVER REWARD: ",rover.reward);
-}
+    //rover.get_reward();
     my_data['status'] = "State";
- 
-    my_data['state'] = rover.state;
-    my_data['reward'] = rover.reward
+    my_data['sensors'] = rover.sensors;
+    my_data['last_angle'] = rover.last_received_angle;
+    my_data['x'] = rover.x;
+    my_data['y'] = rover.y;
+
     rover.move();
     rover.draw();
     senddata(my_data);
@@ -90,81 +77,12 @@ Rover.prototype.get_reward = function() {
     //5 is food
     //6 is other
 
-    this.state = [];
-    this.state.push(this.last_received_angle)
-    this.state.push(Math.round(this.x));
-    this.state.push(Math.round(this.y));
-    this.reward = 0;
-    //sensors first
-    var s = {} ;
-    var tx = 0.0;
-
-    var hit_wall = false
-
-    for(var ss = 0;ss < this.num_sensors; ss++) {
-        var final_status = 0;
-        s = this.sensors[ss];
-        this.state.push(s.status);
-
-        if (s.status == 0) {
-             this.reward+= 1.0
-        }
-
-        //walls numbered 1-4
-        if (s.status > 0 && s.status < 5) {
-           this.reward += 0.1;
-        }
-        //food
-        if (s.status == 5) {
-           this.reward += 10.0;
-        }
-     } //end of loop on sensors
-    //now do checks on rover center
- 
-    var border_status = 0;
-    border_status = check_borders(this.x,this.y,this.r);
-    if (border_status > 0 && border_status < 5 ) {
-       //this.reward += 0.01;
-    }
-
-    //food
-    var food_status = 0;
-    food_status = check_food(this.x,this.y);
-    if (food_status > 0) {
-       this.reward += 20.0;
-       this.state.push(1) //got a food hit on body
-    }else {
-       this.state.push(0)
-    }
-
-    //just for breathing 
-    this.reward += 0.01;
-}
-//end of reward
-
-function reset_rover_positions(rovers) {
-    sum = 0;
-    best = -9999;
-    worst = 9999;
-
-        rover.reset_position();
-
-        r = rover.reward;
-        if (r > best) {
-            best = r;
-        }
-        if (r < worst) {
-            worst = r;
-        }
-        sum += r
-        rover.reward = 0;
+    //calculate reward and distance in brain
+    this.state = {};
+    this.state.last_angle = this.last_received_angle
+    this.state.X = Math.round(this.x);
+    this.state.Y = Math.round(this.y);
+    this.state.Sensors = this.sensors
 }
 
-Rover.prototype.reset_position = function() {
-    this.x = getRandomInt(50,width-50);
-    this.y = getRandomInt(50,height-50);
-    junk = getRandomInt(0, 8)
-    this.angle = junk *  Math.PI / 8;
-    this.velocity = 2.0;
-}
 

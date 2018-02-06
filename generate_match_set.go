@@ -25,17 +25,18 @@ func generate_match_set(state_string string) {
             possible_actions[v.Action]++
         }
     }
-    fmt.Printf("after appending to m len m is %d \n",len(m))
     sum_pos := 0
     for _,v := range possible_actions {
        if v > 0 {
            sum_pos++
        }
     } 
- 
-    if sum_pos <= parameters.Theta_mna {
-        cover(state_string)
+
+    if sum_pos < parameters.Theta_mna {
+        cover()
     }
+
+
 } //end of generate_match_set
 
 func does_match(state_string string,cc string) bool {
@@ -62,20 +63,14 @@ if len(state_string) != len(cc) {
 
 
 
-func cover(state_string string) {
+func cover() {
 
     var c Classifier
- 
+     
     for k,v := range possible_actions {
        if v <= 0 {
            c = make_classifier(state_string,k)
-           if len(c.Condition) != len(state_string) {
-              fmt.Printf("in cover c len %d s len %d\n",len(c.Condition),len(state_string))
-              fmt.Printf("Exiting\n")
-              os.Exit(5)
-           }
            ka := make_key(c.Condition,c.Action)
-           
            p[ka] = c
            m[ka] = c
            delete_from_population()

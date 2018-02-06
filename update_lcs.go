@@ -11,11 +11,11 @@ var max_pa float64
 var state_string_minus_one string
  
 func update_lcs() {
-        
-    fmt.Printf("A1 LENGTH : %d\n",len(A1))
+       
+    big_p = 0.0 
     if len(A1) > 0 {
+       
         big_p = reward_minus_one + parameters.Gamma * max_pa
-        fmt.Printf("BIG_P: %f R1 : %f GAMMA: %f MAXPA %f \n",big_p,reward_minus_one,parameters.Gamma,max_pa)
         if max_pa <= 0.0 {
            fmt.Printf("max_pa <= zero %f\n",max_pa)
            fmt.Printf("PREDICTIVE ARRAY IS: %+v\n",prediction_array)
@@ -23,9 +23,10 @@ func update_lcs() {
            os.Exit(2)
         }
         update_set()
-        run_ga()
+        //run_ga()
      }
-
+       //before := len(A1)
+       //al := len(A)
        for k,_ := range A1 {
            delete(A1,k)
        }
@@ -33,27 +34,18 @@ func update_lcs() {
        for k,v := range A {
             A1[k] = v
        }
-       fmt.Printf("AFTER ACTION SET COPY: LEN A1: %d LEN A %d \n",len(A1),len(A))
+
+       //after := len(A1)
+       //if before != after {
+        //   fmt.Printf("AT UPDATE LEN(A1) before %d LEN(A) %d LEN(A1) after %d\n",before,al,after)
+       //}
 
        reward_minus_one = reward
        state_string_minus_one =  state_string
 } //end of update_lcs
 
 func update_set() {
-    //reward is 'P'  ... big_p
-    //reward from the environment is reward
 
-    fmt.Printf("UPDATE A1 BIG_P IS : %f REWARD %f \n",big_p,reward_minus_one)
-
-    for k,v := range A1 {
-        //experience
-        v.Exp++
-        A1[k] = v
-    }
-
-
-    //action set size estimate
-    //'c.n' is numerosity
     numerosity_sum := 0.0
     for _,v := range A1 {
         numerosity_sum += v.n
@@ -62,25 +54,38 @@ func update_set() {
     for k,v := range A1 {
         //experience
         v.Exp++
+        //action set size estimate
+        //'c.n' is numerosity
 
-        delta := big_p - v.p 
-        ad := math.Abs(delta)
         if v.Exp < 1.0/parameters.Beta {
-            v.p += delta/v.Exp    //prediction
-            v.Epsilon += (ad - v.Epsilon)/v.Exp   //prediction_error
+            v.p += (big_p -v.p)/v.Exp    //prediction
+        } else {
+            v.p += parameters.Beta * (big_p - v.p)
+        }
+
+        //prediction error
+        if v.Exp < 1.0/parameters.Beta {
+            v.Epsilon += (math.Abs((big_p-v.p)) - v.Epsilon)/v.Exp   //prediction_error
+        } else {
+            v.Epsilon += parameters.Beta * (math.Abs((big_p-v.p)) - v.Epsilon)
+        }
+
+        if v.Exp < 1.0/parameters.Beta {
             v.as += (numerosity_sum - v.as)/v.Exp      //asction set size
         } else {
-            v.p += parameters.Beta * delta
-            v.Epsilon += parameters.Beta * (ad - v.Epsilon)
             v.as += parameters.Beta * (numerosity_sum - v.as)
         }
+
         if v.as <= 0.0 {
             fmt.Printf("Action set size < zero %f numerosity_sum %f \n",v.as,numerosity_sum)
             fmt.Printf("Exiting from update_set \n")
-            os.Exit(4)
+            os.Exit(7)
         }
-        if v.Epsilon <= 0.0 {
+        if v.Epsilon < 0.0 {
             fmt.Printf("Epsilon < zero %f\n",v.Epsilon)
+            fmt.Printf("BIG_P %f p %f \n",big_p,v.p)
+            fmt.Printf("reward1 %f Gamma %f max_pa %f \n",reward_minus_one, parameters.Gamma, max_pa)
+            fmt.Printf("Exp %f Beta %f \n",v.Exp,parameters.Beta)
             fmt.Printf("Exiting from update_set \n")
             os.Exit(4)
         }
