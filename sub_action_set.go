@@ -25,17 +25,17 @@ func do_action_set_subsumption() {
     if cl.Condition != "" {
         for k,v := range A1 {
           if is_more_general(cl.Condition,v.Condition) {
-                cl.n = cl.n + v.n
+                cl.Numerosity = cl.Numerosity + v.Numerosity
                 delete(A1,k)
-                delete(p,k)
+                delete(population,k)
           }
         }
     } //end of if on nil
 } //end of do_A1_subsumption
 
 func could_subsume(cl Classifier) bool {
-    if cl.Exp > parameters.Theta_sub {
-        if cl.Epsilon < parameters.Epsilon_zero {
+    if cl.Experience > float64(p.Subsumption_threshold) {
+        if cl.Error < p.Error_threshold {
            return true
         }
     }

@@ -29,20 +29,7 @@ var state_record State_record
  
 var angle_record Angle_record
 
-type Classifier struct {
-    Condition    string       //what was sent from sensors
-    Action       int          //what was result of thinking about condition
-    p            float64      //predicted payoff
-    Epsilon float64
-    F            float64      //fitness
-    Exp   float64 
-    ts    float64
-    as float64                   //average selection set size
-    n   float64                  //numerosity
-}
-
-var p = map[string]Classifier{}
-var m = map[string]Classifier{}
+var population = map[string]Classifier{}
 var A = map[string]Classifier{}
 var A1 = map[string]Classifier{}
 
@@ -82,11 +69,11 @@ func get_action( message []byte) []byte {
         my_time++ 
         sum_reward+= reward
         if (int(my_time) % 100 ) == 0 {
-           fmt.Printf("MY_TIME %f POP SIZE: %d SUM REW: %f \n",my_time,len(p),sum_reward)
+           fmt.Printf("MY_TIME %f POP SIZE: %d SUM REW: %f \n",my_time,len(population),sum_reward)
            sum_reward = 0.0
            dump_match_set()
         }
-        generate_match_set(state_string)
+        generate_match_set()
         generate_prediction_array()
         select_action()
         generate_action_set()
@@ -94,7 +81,7 @@ func get_action( message []byte) []byte {
            fmt.Printf("New action set for action %d is zero\n",action)
            fmt.Printf("Possible_actions is %+v\n",possible_actions)
            fmt.Printf("Prediction array is %+v\n",prediction_array)
-           fmt.Printf("Match set size is %d \n",len(m))
+           fmt.Printf("Match set size is %d \n",len(match_set))
            dump_match_set()
            os.Exit(2)
         }
@@ -111,7 +98,7 @@ func get_action( message []byte) []byte {
 func dump_population() {
 
      kntr := make(map[string]int)
-     for _,v := range p {
+     for _,v := range population {
        kntr[v.Condition]++
      }
      for k,v := range kntr {
@@ -120,29 +107,6 @@ func dump_population() {
 
 } //end of dump
 
-func dump_match_set() {
-     fmt.Println("DUMP MATCH SET \n")
-     fmt.Printf( "%s -- \n",state_string)
-     kntr := make(map[string]int)
-     kntr2 := make(map[int]int)
-
-     for _,v := range m {
-       kntr[v.Condition]++
-     }
-     for k,v := range kntr {
-        fmt.Printf("%s %d\n",k,v)
-     }
-
-     for _,v := range m {
-       kntr2[v.Action]++
-     }
-     fmt.Printf("Action Counts\n")
-
-     for k,v := range kntr2 {
-        fmt.Printf("ACTIONS %d %d\n",k,v)
-     }
-
-} //end of dump_match_set
 
 func generate_prediction_array() {
 
@@ -151,11 +115,11 @@ func generate_prediction_array() {
         delete(prediction_array,k)
     }
 
-    for _,v := range m {
-        prediction_array[v.Action] += v.p * v.F
-        fsa[v.Action] += v.F
+    for _,v := range match_set {
+        prediction_array[v.Action] += v.Average_reward * v.Fitness
+        fsa[v.Action] += v.Fitness
     } 
-    for k,_ := range possible_actions {
+    for k,_ := range prediction_array {
         if fsa[k] > 0.0 {
             prediction_array[k] = prediction_array[k]/fsa[k]
         }
@@ -164,7 +128,7 @@ func generate_prediction_array() {
 
 func select_action() {
     action = 0
-    if rand.Float64() < parameters.Prob_explor {
+    if rand.Float64() < p.Exploration_probability {
         //explore
         action = rand.Intn(len(possible_actions))
         get_max_pa()
@@ -201,7 +165,7 @@ func generate_action_set() {
        delete(A,k)
    }
    
-   for k,v := range m {
+   for k,v := range match_set {
       if v.Action == action {
          A[k] = v
       }

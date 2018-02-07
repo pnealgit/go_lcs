@@ -2,108 +2,129 @@ package main
 
 import ( 
     "fmt"
-    "math/rand"
     "os"
+    "math/rand"
 )
  
-func run_ga() {
-    fmt.Printf("IN GA\n")
+func update() {
+
+    fmt.Printf("IN UPDATE/GA\n")
     sum := 0.0
     nsum:= 0.0
     for _,v := range A1 {
-        sum += float64(v.ts) * v.n
-        nsum += v.n
+        sum += float64(v.Time_stamp) * v.Numerosity
+        nsum += v.Numerosity
     }
     avg := sum/nsum;
-    if my_time - avg < parameters.Theta_ga {
+    if my_time - avg < float64(p.Ga_threshold) {
        return
     }
     var parent0 Classifier
     var parent1 Classifier
-    var child  []Classifier
+    var child0 Classifier
+    var child1 Classifier
 
     for k,v := range A1 {
-          v.ts = my_time
+          v.Time_stamp = my_time
           A1[k] = v
     }
-    p0x := select_offspring()
-    p1x := select_offspring()
+    parent0 = select_parent()
+    parent1 = select_parent()
 
-    parent0 = A1[p0x]
-    parent1 = A1[p1x]
+    var new_children map[int]Classifier
 
-    fmt.Printf("LEN A1 %d ACTION IN GA: %d\n",len(A1),parent0.Action)
+    my_copy(&parent0,&child0)
+    my_copy(&parent1,&child1)
+    child0.Numerosity = 1
+    child1.Numerosity = 1
+    child0.Experience = 0
+    child1.Experience = 0
+    var condition0 string
+    var condition1 string
 
-    child = append(child,Classifier{})
-    child = append(child,Classifier{})
-    my_copy(&parent0,&child[0])
-    my_copy(&parent1,&child[1])
+    if rand.Float64() < p.Crossover_probability {
+        condition0,condition1 = crossover(parent0.Condition,parent1.Condition)
+        child0.Condition = condition0
+        child1.Condition = condition1
+        child0.Average_reward  = 
+             (parent0.Average_reward + parent1.Average_reward)/2.0
+        child0.Error = (parent0.Error + parent1.Error)/2.0
+        child0.Fitness = (parent0.Fitness + parent1.Fitness)/2.0
+        //dont know for sure
+        child0.Action_set_size = 
+              (parent0.Action_set_size + parent1.Action_set_size)/2.0
+        child1.Average_reward = child0.Average_reward
+        child1.Error = child0.Error
+        child1.Fitness = child0.Fitness
+        child1.Action_set_size = child0.Action_set_size
+     }
 
-    child[0].n = 1
-    child[1].n = 1
-    child[0].Exp = 0
-    child[1].Exp = 0
-    
-    if rand.Float64() < parameters.Chi {
-          child[0].Condition,child[1].Condition = apply_crossover(child[0].Condition,child[1].Condition)
-          child[0].p = (parent0.p + parent1.p)/2
-          child[0].Epsilon = (parent0.Epsilon + parent1.Epsilon)/2
-          child[0].F = (parent0.F + parent1.F)/2
-          child[1].p = child[0].p
-          child[1].Epsilon = child[0].Epsilon
-          child[1].F = child[0].F
+      
+
+    child0.Condition = mutate(child0.Condition)
+    child1.Condition = mutate(child1.Condition)
+    child0.Fitness = child0.Fitness * 0.1
+    child1.Fitness = child1.Fitness * 0.1
+
+    new_children[0] = child0
+    new_children[1] = child1
+
+    subsume := false
+    for k,v := range new_children {
+        if p.Do_ga_subsumption {
+     
+            if does_subsume(parent0,v) {
+                parent0.Numerosity++
+                insert_into_population(parent0)
+                subsume = true
+            } 
+            if does_subsume(parent1,v) {
+               parent1.Numerosity++
+               insert_into_population(parent1)
+               subsume = true
+            }
+            if subsume {
+               delete(new_children,k)
+            } 
+        }
     }
 
-    child[0].F = child[0].F * 0.1
-    child[1].F = child[1].F * 0.1
-     
-    i := 0 
-    for i=0;i<len(child);i++ {
-          child[i].Condition = apply_mutation(child[i].Condition)
-          if parameters.Do_ga_subsumption {
-              if does_subsume(parent0,child[i]) {
-                  parent0.n++
-              } else if does_subsume(parent1,child[i]) {
-                  parent1.n++
-              } else { 
-                  insert_in_population(child[i])
-              }
-          } else {
-              insert_in_population(child[i])
-          } //end of if on do_ga
+   //any children left should be inserted
+   for _,v := range new_children {
+        insert_into_population(v)
+        delete_from_population()
+    }
 
-          //this means clean up population
-          //delete_from_population()
-      } //end of loop on child 
 } //end of run_ga
 
-func select_offspring()  string {
+func select_parent()  Classifier {
 
-    fitness_sum := 0.0
+    total_fitness := 0.0
     for _,v := range A1 {
-         fitness_sum += v.F
+         total_fitness += v.Fitness
     } 
-    if fitness_sum <= 0.0 {
-        fmt.Printf("FITNESS SUM %f\n",fitness_sum)
-        fmt.Printf("Exiting from select_offspring\n")
-        os.Exit(3)
-    }
 
-    choice_point := rand.Float64() * fitness_sum
-    fitness_sum = 0.0
-    pindex := ""
+    selector := rand.Float64() * total_fitness
+    total_fitness = 0.0
+    var selected_k string
+    selected_k = ""
     for k,v := range A1 {
-         fitness_sum += v.F
-         if fitness_sum > choice_point {
-           pindex = k
+         selector -= v.Fitness
+         if selector <= 0.0 {
+           selected_k = k
            break
          } //end of if on fitness
     } //end of k,v loop 
-        
-    return pindex  
+    if selected_k == "" {
+       fmt.Printf("BAD PARENT SELECTION \n")
+       fmt.Printf("Exiting\n")
+       os.Exit(7)
+    }
+    return A1[selected_k]
+
 } //end of select_offspring
 
-func apply_crossover(c0 string ,c1 string)  (string,string){
+func crossover(c0 string ,c1 string)  (string,string){
     //two point crossover
     //swap values betweens 2 points
 
@@ -145,12 +166,12 @@ func apply_crossover(c0 string ,c1 string)  (string,string){
     return string(b0),string(b1)
 }
 
-func apply_mutation(condition string) string {
+func mutate(condition string) string {
     i := 0
     temp := []byte(condition)
 
     for i=0;i<len(temp);i++ {
-         if rand.Float64() < parameters.Mu {
+         if rand.Float64() < p.Mutation_probability {
              if temp[i] == '#' {
                 temp[i] = state_string_minus_one[i]
              } else {

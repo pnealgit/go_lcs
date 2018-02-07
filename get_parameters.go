@@ -2,59 +2,58 @@ package main
 import ( "fmt")
 
 type Parameters struct {
-    N   int
-    Beta float64
-    Alpha float64
-    Gamma float64
-    Epsilon_zero float64
-    V  float64
-    Exp float64
-    Theta_ga float64
-    Chi   float64
-    Mu    float64
-    Theta_del int
-    Sigma float64
-    Theta_sub float64
-    Prob_sharp float64
-    Prediction_initial float64
-    Epsilon_initial float64
-    Fitness_initial float64
-    Prob_explor float64
-    Theta_mna int
-    Do_ga_subsumption bool
+    Population_size   int
+    Learning_rate     float64
+    Accuracy_coefficient float64
+    Error_threshold  float64
+    Accuracy_power  float64
+    Discount_factor float64
+    Ga_threshold    int
+    Crossover_probability float64
+    Mutation_probability float64
+    Deletion_threshold  int
+    Fitness_threshold    float64
+    Subsumption_threshold  int
+    Wildcard_probability  float64
+    Initial_prediction  float64
+    Initial_error       float64
+    Initial_fitness     float64
+    Exploration_probability  float64
+    Minimum_actions     int
+    Do_ga_subsumption   bool
     Do_action_set_subsumption bool
 }
 
 var possible_actions map[int]int
 
-var parameters Parameters
+var p Parameters
 
 func get_parameters() {
 
         //comments on left are Butz and Wilson names
 
-        parameters.Population_size = 400       //N
-        parameters.Learning_rate =  0.15 	//beta
-        parameters.Accuracy_coefficient = 0.1   //alpha
-        parameters.Error_threshold = 0.01       //epsilon_zero .. for rewards between 0 and 1
-        parameters.Accuracy_power  = 5.0        //nu
-        parameters.Discount_factor = 0.71       //gamma
-        parameters.Ga_threshold = 35            //theta_GA
-        parameters.Crossover_probability = 0.5  //chi
-        parameters.Mutation_probability = 0.03  //mu
-        parameters.Deletion_threshold = 20	//theta_del
-        parameters.Fitness_threshold = .1       //delta
-        parameters.Subsumption_threshold = 20   //theta_sub 
-        parameters.Wildcard_probability = .33   //P_#
-        parameters.Initial_prediction = 0.00001 //P_i
-        parameters.Initial_error = 0.00001      //epsilon_i
-        parameters.Initial_fitness = 0.00001    //f_i
-        parameters.Exploration_probability = 0.5 //p_exp
-        parameters.Minimum_actions = 3           //equal to the number of actions..could be smaller
-        parameters.Do_ga_subsumption = false 
-        parameters.Do_action_set_subsumption = false 
+        p.Population_size = 400       //N
+        p.Learning_rate =  0.15 	//beta
+        p.Accuracy_coefficient = 0.1   //alpha
+        p.Error_threshold = 0.01       //epsilon_zero .. for rewards between 0 and 1
+        p.Accuracy_power  = 5.0        //nu
+        p.Discount_factor = 0.71       //gamma
+        p.Ga_threshold = 35            //theta_GA
+        p.Crossover_probability = 0.5  //chi
+        p.Mutation_probability = 0.03  //mu
+        p.Deletion_threshold = 20	//theta_del
+        p.Fitness_threshold = .1       //delta
+        p.Subsumption_threshold = 20   //theta_sub 
+        p.Wildcard_probability = .33   //P_#
+        p.Initial_prediction = 0.00001 //P_i
+        p.Initial_error = 0.00001      //epsilon_i
+        p.Initial_fitness = 0.00001    //f_i
+        p.Exploration_probability = 0.5 //p_exp
+        p.Minimum_actions = 3           //equal to the number of actions..could be smaller
+        p.Do_ga_subsumption = false 
+        p.Do_action_set_subsumption = false 
 
-        fmt.Printf("PARAMETERS %+v ",parameters)
+        dump_parameters()
 
         //this is for actions dont move , up,down,left,right
         //used in testing for cover
@@ -66,25 +65,16 @@ func get_parameters() {
 } //end of get_parameters
 
 
-func (p Parameters) String() string {
-     //this will be invoked when you do a fmt.Printf("%+v\n",parameters)
-     kaboodle := fmt.Sprintf(
-              "Population Size: \t%f\n
-               Learning_rate  : \t%f\n
-               Accuracy_Coefficient: \t%f\n
-               Error_threshold: \t%f\n
-               Accuracy_power :  \t%f\n
-               Discount_factor: \t%f\n
-               Ga_threshold   :  \t%f\n",
-               p.Population_size,
-               p.Learning_rate,
-               p.Accuracy_coefficient,
-               p.Error_threshold,
-               p.Accuracy_power,
-               p.Discount_factor,
-               p.Ga_threshold
-               )
-    return kaboodle
+func dump_parameters() {
+      fmt.Printf("Population Size: \t%f\n", p.Population_size)
+      fmt.Printf("Learning_rate  : \t%f\n", p.Learning_rate)
+      fmt.Printf("Accuracy_Coefficient: \t%f\n", p.Accuracy_coefficient)
+      fmt.Printf("Error_threshold: \t%f\n", p.Error_threshold)
+      fmt.Printf("Accuracy_power :  \t%f\n", p.Accuracy_power)
+      fmt.Printf("Discount_factor: \t%f\n", p.Discount_factor)
+      fmt.Printf("Ga_threshold   :  \t%f\n", p.Ga_threshold)
+      fmt.Printf("Crossover_probability : \t%f\n",p.Crossover_probability)
+      fmt.Printf("Mutation_probability : \t%f\n",p.Mutation_probability)
 }
 
 

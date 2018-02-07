@@ -73,7 +73,7 @@ func main() {
         canvas_height = 300
         canvas_max_distance = math.Hypot(canvas_width,canvas_height)
         get_parameters()
-        p = make(map[string]Classifier)
+        population = make(map[string]Classifier)
         reward_minus_one = 0.0
         my_time = 0.0
         sum_reward = 0.0
